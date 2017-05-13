@@ -15,10 +15,10 @@ Later I may make it a more colorful UI for it, but since I didn't want to limit 
 
 + INPUTS
 
-..+ rock
+  + rock
 
-..+ paper
+  + paper
 
-..+ scissors
+  + scissors
 
 Thank you have a great day.
