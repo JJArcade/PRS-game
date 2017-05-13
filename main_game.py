@@ -125,6 +125,7 @@ class gameplay:
 if __name__ == "__main__":
     player_file = os.path.abspath("players.db")
     print(player_file)
+    input("Press ENTER to continue")
     conn = sqlite3.connect(player_file)
     curr = conn.cursor()
     # grab players
