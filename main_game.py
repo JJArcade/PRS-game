@@ -26,9 +26,9 @@ class npc_player:
 
     def updateRecord(self, outcome):
         select_query = "SELECT %s WHERE player_id = %s" % (outcome, self.playerID)
-        update_query = "UPDATE players SET %s=(%s)+1 WHERE player_id=%s" % (outcome, select_query, self.playerID)
+        update_query = "UPDATE players SET %s=(%s)+1 WHERE player_id = %s" % (outcome, select_query, self.playerID)
         #print(update_query)
-        curr.execute(update_query)
+        #curr.execute(update_query)
 
     def throw(self):
         papers = ["paper"]*self.paper
@@ -49,8 +49,8 @@ class player(npc_player):
         #print(update_query % (skills[0], self.readAbil+points_added, self.playerID))
         #print(update_query % (skills[0], self.bluffAbil+points_added, self.playerID))
 
-        self.curr.execute(update_query % (skills[0], self.readAbil+points_added, self.playerID))
-        self.curr.execute(update_query % (skills[1], self.bluffAbil+points_added, self.playerID))
+        #self.curr.execute(update_query % (skills[0], self.readAbil+points_added, self.playerID))
+        #self.curr.execute(update_query % (skills[1], self.bluffAbil+points_added, self.playerID))
 
 class gameplay:
 
