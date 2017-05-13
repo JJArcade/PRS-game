@@ -1,9 +1,10 @@
-import sqlite3, random
+import sqlite3, random, re, os
 
 class npc_player:
 
     def __init__(self, player):
-        self.conn = sqlite3.connect("./players.db")
+        player_file = os.path.abspath("players.db")
+        self.conn = sqlite3.connect(player_file)
         self.curr = self.conn.cursor()
         self.playerID = player
         # get name
@@ -43,7 +44,7 @@ class player(npc_player):
         opp_avg = (opponent.readAbil + opponent.bluffAbil)/2
         play_avg = (self.readAbil + self.bluffAbil)/2
         points_added = 2 + 10*((opp_avg-play_avg)/100)
-        skills = ("read_ability", "bluff ability")
+        skills = ("read_ability", "bluff_ability")
         update_query = "UPDATE players SET %s = %s WHERE player_id = %s"
         #print(update_query % (skills[0], self.readAbil+points_added, self.playerID))
         #print(update_query % (skills[0], self.bluffAbil+points_added, self.playerID))
@@ -122,7 +123,8 @@ class gameplay:
                 return "draw"
 
 if __name__ == "__main__":
-    conn = sqlite3.connect("./players.db")
+    player_file = os.path.abspath("players.db")
+    conn = sqlite3.connect(player_file)
     curr = conn.cursor()
     # grab players
     select_query = "SELECT player_id FROM players WHERE player_name != \"_player\""
