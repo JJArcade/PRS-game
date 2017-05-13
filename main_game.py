@@ -124,6 +124,7 @@ class gameplay:
 
 if __name__ == "__main__":
     player_file = os.path.abspath("players.db")
+    print(player_file)
     conn = sqlite3.connect(player_file)
     curr = conn.cursor()
     # grab players
@@ -165,6 +166,8 @@ if __name__ == "__main__":
         conn.commit()
         leave = input("Exit? y/n\n")
         if leave in ("y", "Y"):
+            conn.close()
+            curr_opponent.conn.close()
             Exit = True
 
 
