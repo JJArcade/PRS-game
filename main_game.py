@@ -3,7 +3,11 @@ import sqlite3, random, re, os
 class npc_player:
 
     def __init__(self, player):
-        player_file = os.path.abspath("players.db")
+        player_file=""
+        for a in os.listdir(os.path.curdir):
+            player_file = os.path.abspath(a)
+            if bool(re.search("players.db", player_file)):
+                break
         self.conn = sqlite3.connect(player_file)
         self.curr = self.conn.cursor()
         self.playerID = player
@@ -123,7 +127,11 @@ class gameplay:
                 return "draw"
 
 if __name__ == "__main__":
-    player_file = os.path.abspath("players.db")
+    player_file=""
+    for a in os.listdir(os.path.curdir):
+        player_file = os.path.abspath(a)
+        if bool(re.search("players.db", player_file)):
+            break
     print(player_file)
     input("Press ENTER to continue")
     conn = sqlite3.connect(player_file)
