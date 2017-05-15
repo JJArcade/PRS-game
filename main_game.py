@@ -31,8 +31,10 @@ class npc_player:
     def updateRecord(self, outcome):
         select_query = "SELECT %s WHERE player_id = %s" % (outcome, self.playerID)
         update_query = "UPDATE players SET %s=(%s)+1 WHERE player_id = %s" % (outcome, select_query, self.playerID)
-        #print(update_query)
-        #curr.execute(update_query)
+        print(update_query)
+        self.curr.execute(update_query)
+
+        self.conn.commit()
 
     def throw(self):
         papers = ["paper"]*self.paper
@@ -42,6 +44,7 @@ class npc_player:
         choice = random.choice(pool)
         return choice
 
+
 class player(npc_player):
 
     def updateStats(self, opponent):
@@ -50,17 +53,20 @@ class player(npc_player):
         points_added = 2 + 10*((opp_avg-play_avg)/100)
         skills = ("read_ability", "bluff_ability")
         update_query = "UPDATE players SET %s = %s WHERE player_id = %s"
-        #print(update_query % (skills[0], self.readAbil+points_added, self.playerID))
-        #print(update_query % (skills[0], self.bluffAbil+points_added, self.playerID))
+        print(update_query % (skills[0], self.readAbil+points_added, self.playerID))
+        print(update_query % (skills[0], self.bluffAbil+points_added, self.playerID))
 
-        #self.curr.execute(update_query % (skills[0], self.readAbil+points_added, self.playerID))
-        #self.curr.execute(update_query % (skills[1], self.bluffAbil+points_added, self.playerID))
+        self.curr.execute(update_query % (skills[0], self.readAbil+points_added, self.playerID))
+        self.curr.execute(update_query % (skills[1], self.bluffAbil+points_added, self.playerID))
+
+        self.conn.commit()
+
 
 class gameplay:
 
     def __init__(self, Player, Opponent):
         self.papers = ("paper", "Paper")
-        self.rocks = ("rock", "Rocks")
+        self.rocks = ("rock", "Rock")
         self.sciz = ("scissors", "Scissors")
         self.opp = Opponent
         self.opp_name = Opponent.playerName
@@ -72,7 +78,7 @@ class gameplay:
         score = 0
 
         while Round <= 3:
-            print("ROUND %s" % Round)
+            print("".ljust(10,'=')+"ROUND %s" % Round + "".ljust(10,'=')+"\n")
             player_throw = self.player_input()
             opp_throw = self.opp.throw()
             result = self.outcome(player_throw, opp_throw)
