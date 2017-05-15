@@ -59,6 +59,17 @@ class player(npc_player):
         self.curr.execute(update_query % (skills[0], self.readAbil+points_added, self.playerID))
         self.curr.execute(update_query % (skills[1], self.bluffAbil+points_added, self.playerID))
 
+        # UPDATE CAHRACTER WITH NEW STATS
+        stats_query = "SELECT read_ability, bluff_ability, paper, rock, scissors FROM" \
+                      " players WHERE player_id=%s"
+        self.curr.execute(stats_query % self.playerID)
+        x = self.curr.fetchone()
+        self.readAbil = x[0]
+        self.bluffAbil = x[1]
+        self.paper = int(x[2])
+        self.rock = int(x[3])
+        self.scissors = int(x[4])
+
         self.conn.commit()
 
 
@@ -70,6 +81,7 @@ class gameplay:
         self.sciz = ("scissors", "Scissors")
         self.opp = Opponent
         self.opp_name = Opponent.playerName
+        self.player = Player
 
         print("%s VS %s \nLETS GET IT ON!" % ("You", self.opp_name))
 
@@ -79,7 +91,24 @@ class gameplay:
 
         while Round <= 3:
             print("".ljust(10,'=')+"ROUND %s" % Round + "".ljust(10,'=')+"\n")
-            player_throw = self.player_input()
+
+            ## INPUT CYCLE
+            player_thrown = False
+            read_bluff_called = False
+            while not player_thrown:
+                if not read_bluff_called:
+                    player_throw = self.player_input(("scissors","rock","paper","bluff","read"))
+                else:
+                    player_throw = self.player_input(("scissors","rock","paper"))
+                bluff_thrown = bool(re.match(player_throw,"bluff",re.IGNORECASE))
+                read_thrown = bool(re.match(player_throw,"read",re.IGNORECASE))
+                if read_thrown or bluff_thrown:
+                    read_bluff_called = True
+                    if read_thrown:
+                        self.readOpp(self.opp)
+                else:
+                    player_thrown = True
+
             opp_throw = self.opp.throw()
             result = self.outcome(player_throw, opp_throw)
             action_str = "You:\t%s\n%s:\t%s" % (player_throw, self.opp_name, opp_throw)
@@ -97,15 +126,53 @@ class gameplay:
 
         return score
 
-    def player_input(self):
-        choice = input("Enter your move!\n")
-        possible_choices = self.papers+self.rocks+self.sciz
-        good_choice = bool(choice in possible_choices)
-        if not good_choice:
-            while not good_choice:
-                choice = input("Not a valid throw choice.\n Try again.\n")
-                good_choice = bool(choice in possible_choices)
+    def player_input(self, options):
+        choice = input("Enter your move!\n--> ")
+        possible_choices = options
+        # CHECK CHOICES
+        good_choice = False
+        while not good_choice:
+            for a in possible_choices:
+                if bool(re.match(a,choice,re.IGNORECASE)):
+                    good_choice = True
+                    break
+            if good_choice:
+                break
+            else:
+                choice = input("That was an invalid entry.\nEnter your choice again.\n--> ")
         return choice
+
+    def readOpp(self, opp):
+
+        roll = random.randrange(0,105,5)
+        if roll<=self.player.readAbil and roll>1:
+            success = random.randint(0,2)
+            paper_per = opp.paper / (opp.paper + opp.scissors + opp.rock) * 100
+            sciz_per = opp.scissors / (opp.paper + opp.scissors + opp.rock) * 100
+            rock_per = opp.paper / (opp.paper + opp.scissors + opp.rock) * 100
+            if success == 2 or roll == 100:
+                output_string = "Paper:\t %.1f\%\nRock:\t %.1f\%\nScissors:\t %.1f\%" % (paper_per, sciz_per, rock_per)
+                print(output_string)
+            elif success == 1:
+                most_likely = max((paper_per, sciz_per, rock_per))
+                if most_likely == paper_per:
+                    print("Paper:\t%.1f" % paper_per)
+                elif most_likely == sciz_per:
+                    print("Scissors:\t%.1f" % sciz_per)
+                else:
+                    print("Rock:\t%.1f" % rock_per)
+            else:
+                most_likely = max((paper_per, sciz_per, rock_per))
+                if most_likely == paper_per:
+                    print("Most likely paper.")
+                elif most_likely == sciz_per:
+                    print("Most likely scissors.")
+                else:
+                    print("Most likely a rock.")
+        elif roll>1:
+            print("That's a failure.")
+        else:
+            print("That's a critcal failure.")
 
     def outcome(self, player_throw, opp_throw):
         if player_throw in self.rocks:
@@ -162,13 +229,13 @@ if __name__ == "__main__":
         curr_opponent = npc_player(y)
         game = gameplay(you, curr_opponent)
         curr_game = game.match()
-        if curr_game>0:
+        if curr_game > 0:
             you.updateStats(curr_opponent)
             you.updateRecord("wins")
             curr_opponent.updateRecord("losses")
             print("You WON the match!")
             print("%s slinks away in defeat..." % curr_opponent.playerName)
-        elif curr_game<0:
+        elif curr_game < 0:
             you.updateRecord("losses")
             curr_opponent.updateRecord("wins")
             print("You LOST the match!")
@@ -178,7 +245,7 @@ if __name__ == "__main__":
             curr_opponent.updateRecord("draws")
             print("The match is a draw.")
             print("I have no feelings on the matter.")
-        conn.commit()
+        # conn.commit()
         leave = input("Exit? y/n\n")
         if leave in ("y", "Y"):
             conn.close()
