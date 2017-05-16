@@ -50,6 +50,25 @@ class npc_player:
         self.rerollThrows()
         return choice
 
+    def readOpp(self):
+        roll = random.randrange(0, 105, 5)
+        if roll<=self.readAbil and roll>1:
+            success = random.randint(0, 2)
+            if success == 2 or roll == 100:
+                return "crit read"
+            elif success == 1:
+                return "read"
+            else:
+                return "low read"
+        elif roll > 1:
+            return None
+        else:
+            return False
+
+    def bluffOpp(self):
+
+
+
 
 class player(npc_player):
 
@@ -99,69 +118,48 @@ class gameplay:
             print("".ljust(10,'=')+"ROUND %s" % Round + "".ljust(10,'=')+"\n")
 
             ## INPUT CYCLE
-            player_thrown = False
-            read_bluff_called = False
-            player_fail = False
-            opp_throw = None
-            opp_choices = ["rock", "paper", "scissors"]
-            while not player_thrown:
-                if not read_bluff_called:
-                    player_throw = self.player_input(("scissors","rock","paper","bluff","read"))
-                else:
-                    player_throw = self.player_input(("scissors","rock","paper"))
-                bluff_thrown = bool(re.match(player_throw,"bluff",re.IGNORECASE))
-                read_thrown = bool(re.match(player_throw,"read",re.IGNORECASE))
-                if read_thrown or bluff_thrown:
-                    x = None
-                    read_bluff_called = True
-                    if read_thrown:
-                        x = self.readOpp(self.opp)
-                    else:
-                        x = self.bluffOpp()
-                    if x is not None:
-                        if read_thrown:
-                            player_fail = True
-                        else:
-                            if x == False:
-                                player_fail = True
-                            else:
-                                player_fail = x
-                else:
-                    player_thrown = True
-                    if player_fail == "crit bluff":
-                        if player_throw == "rock":
-                            opp_throw = "scissors"
-                        elif player_throw == "paper":
-                            opp_throw = "rock"
-                        else:
-                            opp_throw = "paper"
-                    elif player_fail == "bluff":
-                        if player_throw == "rock":
-                            self.opp.paper = 0
-                        elif player_throw == "paper":
-                            self.opp.scissors = 0
-                        else:
-                            self.opp.rock = 0
-                    elif player_fail == "weak bluff":
-                        if player_throw == "rock":
-                            self.opp.paper/=2
-                            self.opp.scissors*=1.5
-                        elif player_throw == "paper":
-                            self.opp.scissors/=2
-                            self.opp.rock*=1.5
-                        else:
-                            self.opp.rock/=2
-                            self.opp.paper*=1.5
-                    elif player_fail:
-                        if player_throw == "rock":
-                            opp_throw = "paper"
-                        elif player_throw == "paper":
-                            opp_throw = "scissors"
-                        else:
-                            opp_throw = "rock"
+            player_throw = False
+            opp_throw = False
+            throws = ("rock", "paper", "scissors")
+            abils = ("read" , "bluff")
+            player_ability_played = False
+            opp_ability_played = False
 
-            if opp_throw is None:
-                opp_throw = self.opp.throw()
+            # Initial choices
+            while not player_throw:
+                player_throw = self.player_input(throws+abils)
+                opp_throw = random.choice(("throw",)+abils)
+                if player_throw in abils:
+                    player_ability_played = True
+                if opp_throw in abils:
+                    opp_ability_played = True
+
+            # Resolve choices
+            if opp_ability_played or player_ability_played:
+                # check player first
+                if type(player_throw) == tuple:
+                    if type(opp_throw) == tuple:
+                        if player_throw[0] == "bluff":
+                            if player_throw[1] == "crit":
+                                player_throw = self.player_input(throws)
+                                if player_throw == "rock":
+                                    opp_throw = "scissors"
+                                elif player_throw == "scissors":
+                                    opp_throw = "paper"
+                                else:
+                                    opp_throw = "rock"
+                            elif player_throw[1] == "normal":
+                                player_throw = self.player_input(throws)
+                                if opp_throw[0] == "read":
+                                    new_throws = list(throws)
+                                    if opp_throw[1] not in ("crit","fail"):
+                                        new_throws.remove(self.get_opposite(player_throw))
+                                        opp_throw = random.choice(new_throws)
+                                    elif opp_throw[1] == "crit":
+                                        new_throws.remove(player_throw)
+                                        opp_throw = random.choice(new_throws)
+
+
 
             result = self.outcome(player_throw, opp_throw)
             action_str = "You:\t%s\n%s:\t%s" % (player_throw, self.opp_name, opp_throw)
@@ -178,6 +176,49 @@ class gameplay:
             Round+=1
 
         return score
+
+    def get_opposite(self, throw):
+        if throw == "rock":
+            return "paper"
+        elif throw == "paper":
+            return "scissors"
+        elif throw == "scissors":
+            return "rock"
+
+    def check_player_bluff(self, bluff, player_throw):
+        if bluff == "crit bluff":
+            if player_throw == "rock":
+                opp_throw = "scissors"
+            elif player_throw == "paper":
+                opp_throw = "rock"
+            else:
+                opp_throw = "paper"
+            return opp_throw
+        elif bluff == "bluff":
+            if player_throw == "rock":
+                self.opp.paper = 0
+            elif player_throw == "paper":
+                self.opp.scissors = 0
+            else:
+                self.opp.rock = 0
+        elif bluff == "weak bluff":
+            if player_throw == "rock":
+                self.opp.paper /= 2
+                self.opp.scissors *= 1.5
+            elif player_throw == "paper":
+                self.opp.scissors /= 2
+                self.opp.rock *= 1.5
+            else:
+                self.opp.rock /= 2
+                self.opp.paper *= 1.5
+        elif bluff:
+            if player_throw == "rock":
+                opp_throw = "paper"
+            elif player_throw == "paper":
+                opp_throw = "scissors"
+            else:
+                opp_throw = "rock"
+            return opp_throw
 
     def player_input(self, options):
         choice = input("Enter your move!\n--> ")
@@ -197,7 +238,6 @@ class gameplay:
         return choice
 
     def readOpp(self, opp):
-
         roll = random.randrange(0,105,5)
         if roll<=self.Player.readAbil and roll>1:
             success = random.randint(0,2)
@@ -230,7 +270,6 @@ class gameplay:
             return False
 
     def bluffOpp(self):
-
         roll = random.randrange(0,105,5)
         if roll<=self.Player.bluffAbil and roll>1:
             success = random.randint(0,2)
