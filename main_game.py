@@ -150,14 +150,50 @@ class gameplay:
                                     opp_throw = "rock"
                             elif player_throw[1] == "normal":
                                 player_throw = self.player_input(throws)
+                                new_throws = list(throws)
                                 if opp_throw[0] == "read":
-                                    new_throws = list(throws)
                                     if opp_throw[1] not in ("crit","fail"):
                                         new_throws.remove(self.get_opposite(player_throw))
                                         opp_throw = random.choice(new_throws)
                                     elif opp_throw[1] == "crit":
                                         new_throws.remove(player_throw)
                                         opp_throw = random.choice(new_throws)
+                                    elif opp_throw[1] == "fail":
+                                        opp_throw = self.get_opposite(self.get_opposite(player_throw))
+                                else:
+                                    new_throws.remove(self.get_opposite(player_throw))
+                                    opp_throw = random.choice(new_throws)
+                            elif player_throw[1] == "weak":
+                                if opp_throw[0] == "read":
+                                    if opp_throw[1] not in ("crit","fail"):
+                                        new_throws.remove(player_throw)
+                                        opp_throw = random.choice(new_throws)
+                                    elif opp_throw[1] == "crit":
+                                        new_throws.remove(self.get_opposite(self.get_opposite(player_throw)))
+                                        opp_throw = random.choice(new_throws)
+                                    else:
+                                        opp_throw = self.get_opposite(self.get_opposite(player_throw))
+                            elif player_throw[1] == "fail":
+                                opp_throw = self.get_opposite(player_throw)
+                        elif player_throw[0] == "read":
+                            if opp_throw[0] == "bluff":
+                                if opp_throw[1] not in ("crit","fail"):
+                                    if player_throw[1] == "crit":
+                                        self.print_opp_chances("full")
+                                    elif player_throw[1] == "normal":
+                                        if opp_throw[1] == "normal":
+                                            self.print_opp_chances("low")
+                                        else:
+                                            self.print_opp_chances("single")
+                                    elif player_throw[1] == "low":
+                                        if opp_throw != "low":
+                                            print("They seemed to have blocked your read.")
+                                        else:
+                                            self.print_opp_chances("low")
+
+
+
+
 
 
 
@@ -176,6 +212,52 @@ class gameplay:
             Round+=1
 
         return score
+
+    def print_opp_chances(self, level):
+        if level == "full":
+            paper = len(self.opp.paper)
+            sciz = len(self.opp.scissors)
+            rock = len(self.opp.rock)
+            total_throws = paper + rock + sciz
+            paper = (paper/total_throws)*100
+            rock = (rock/total_throws)*100
+            sciz = (sciz/total_throws)*100
+            output_str = "Paper:\t%.2f%%\nRock:\t%.2f%%\nScissors:\t%.2f%%" % (paper, rock, sciz)
+            print(output_str)
+        elif level == "single":
+            paper = len(self.opp.paper)
+            sciz = len(self.opp.scissors)
+            rock = len(self.opp.rock)
+            total_throws = paper + rock + sciz
+            paper = (paper / total_throws) * 100
+            rock = (rock / total_throws) * 100
+            sciz = (sciz / total_throws) * 100
+            paper = ["paper",paper]
+            rock = ["rock",rock]
+            sciz = ["scissors",sciz]
+            throw_dict={}
+            for a in (paper,rock,sciz):
+                throw_dict[int(a[0])]=a
+            x = max(throw_dict)
+            output_str = "%s:\t%.2f%%" % tuple(throw_dict[x][1])
+            print(output_str)
+        else:
+            paper = len(self.opp.paper)
+            sciz = len(self.opp.scissors)
+            rock = len(self.opp.rock)
+            total_throws = paper + rock + sciz
+            paper = (paper / total_throws) * 100
+            rock = (rock / total_throws) * 100
+            sciz = (sciz / total_throws) * 100
+            paper = ["paper", paper]
+            rock = ["rock", rock]
+            sciz = ["scissors", sciz]
+            throw_dict = {}
+            for a in (paper, rock, sciz):
+                throw_dict[int(a[0])] = a
+            x = max(throw_dict)
+            output_str = "Maybe %s." % throw_dict[x][0]
+            print(output_str)
 
     def get_opposite(self, throw):
         if throw == "rock":
